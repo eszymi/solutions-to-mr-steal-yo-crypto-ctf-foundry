@@ -9,14 +9,14 @@ import {Token} from "src/other/Token.sol";
 import {GovToken} from "src/freebie/GovToken.sol";
 import {RewardsAdvisor} from "src/freebie/RewardsAdvisor.sol";
 
+import {Advisor} from "src/exploiter_contracts/freebie_exploiter.sol";
 
 contract Testing is Test {
-
-    address attacker = makeAddr('attacker');
-    address o1 = makeAddr('o1');
-    address o2 = makeAddr('o2');
-    address admin = makeAddr('admin'); // should not be used
-    address adminUser = makeAddr('adminUser'); // should not be used
+    address attacker = makeAddr("attacker");
+    address o1 = makeAddr("o1");
+    address o2 = makeAddr("o2");
+    address admin = makeAddr("admin"); // should not be used
+    address adminUser = makeAddr("adminUser"); // should not be used
 
     Token farm;
     GovToken govToken;
@@ -24,7 +24,6 @@ contract Testing is Test {
 
     /// preliminary state
     function setUp() public {
-
         // funding accounts
         vm.deal(admin, 10_000 ether);
         vm.deal(attacker, 10_000 ether);
@@ -37,8 +36,10 @@ contract Testing is Test {
         address[] memory addresses = new address[](2);
         uint256[] memory amounts = new uint256[](2);
 
-        addresses[0]=adminUser; addresses[1]=attacker; // attacker gets 1
-        amounts[0]=10_000e18; amounts[1]=1e18;
+        addresses[0] = adminUser;
+        addresses[1] = attacker; // attacker gets 1
+        amounts[0] = 10_000e18;
+        amounts[1] = 1e18;
         vm.prank(admin);
         farm.mintPerUser(addresses, amounts);
 
@@ -54,17 +55,17 @@ contract Testing is Test {
 
         // --other user stakes their FARM tokens
         vm.prank(adminUser);
-        farm.approve(address(rewardsAdvisor),type(uint).max);
+        farm.approve(address(rewardsAdvisor), type(uint256).max);
         vm.prank(adminUser);
-        rewardsAdvisor.deposit(10_000e18,payable(adminUser),adminUser);
-
+        rewardsAdvisor.deposit(10_000e18, payable(adminUser), adminUser);
     }
 
     /// solves the challenge
     function testChallengeExploit() public {
-        vm.startPrank(attacker,attacker);
-        
-        // implement solution here
+        vm.startPrank(attacker, attacker);
+
+        Advisor exploiter = new Advisor( address(rewardsAdvisor));
+        exploiter.attack();
 
         vm.stopPrank();
         validation();
@@ -72,11 +73,8 @@ contract Testing is Test {
 
     /// expected final state
     function validation() public {
-
         // attacker drains 99.99%+ of the `FARM` tokens from RewardsAdvisor staking contract
-        assertGe(farm.balanceOf(attacker),10_000e18);
-        assertLe(farm.balanceOf(address(rewardsAdvisor)),1e18);
-
+        assertGe(farm.balanceOf(attacker), 10_000e18);
+        assertLe(farm.balanceOf(address(rewardsAdvisor)), 1e18);
     }
-
 }
